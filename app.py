@@ -1,88 +1,68 @@
-import streamlit as st
+import os
 import pandas as pd
+import streamlit as st
 import pyperclip
 
-# ✅ Pastikan layout aplikasi
-st.set_page_config(page_title="Carian Pantun", layout="wide")
+# ---------------------- Pemuatan Data ----------------------
+# Gunakan nama fail yang betul
+file_path = os.path.join(os.path.dirname(__file__), "Data_Pantun_Dikemas_Kini.csv")
 
-# ✅ Paparkan tajuk utama
-st.title("📜 Carian Pantun")
+# Periksa jika fail wujud
+if not os.path.exists(file_path):
+    st.error("❌ Fail 'Data_Pantun_Dikemas_Kini.csv' tidak dijumpai. Sila muat naik fail ke dalam direktori projek.")
+    st.stop()
 
-# ✅ Muatkan data pantun dari CSV
 @st.cache_data
 def load_data():
-    return pd.read_csv("pantun.csv")  # Gantikan dengan fail sebenar
+    return pd.read_csv(file_path)
 
 df = load_data()
 
-# ✅ Pastikan session state mempunyai nilai awal
-if "kategori" not in st.session_state:
-    st.session_state["kategori"] = "Semua"
+# ---------------------- UI Streamlit ----------------------
+st.set_page_config(page_title="📜 Carian Pantun", layout="wide")
+st.title("📜 Carian Pantun")
 
-if "search_query" not in st.session_state:
-    st.session_state["search_query"] = ""
+# ---------------------- Carian Kata Kunci ----------------------
+st.subheader("🔍 Carian Berdasarkan Kata Kunci")
+search_query = st.text_input("Masukkan kata kunci:", key="search_query")
 
-if "pilihan_pantun" not in st.session_state:
-    st.session_state["pilihan_pantun"] = ""
-
-# ✅ Input carian pantun
-search_query = st.text_input("🔍 Masukkan kata kunci:", st.session_state["search_query"])
-
-# ✅ Cari pantun berdasarkan kata kunci
-df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
-
-# ✅ Paparkan jadual pantun
-st.write("📋 **Senarai Pantun**")
-st.dataframe(df_filtered)
-
-# ✅ Pilihan pantun dari hasil carian
-if not df_filtered.empty:
-    pilihan_pantun = st.selectbox("📜 **Pilih Pantun:**", df_filtered["Pantun"].tolist(), key="pantun_cari")
-    st.session_state["pilihan_pantun"] = pilihan_pantun
-
-    # ✅ Paparkan pantun yang dipilih
-    st.markdown("### ✍️ Pantun Pilihan:")
-    st.code(st.session_state["pilihan_pantun"], language="")
-
-    # ✅ Butang salin pantun
-    if st.button("📋 Salin Pantun", key="salin_pantun"):
-        try:
-            pyperclip.copy(st.session_state["pilihan_pantun"])
-            st.success("✅ Pantun berjaya disalin! Gunakan CTRL + V untuk tampal.")
-        except pyperclip.PyperclipException:
-            st.text_area("⚠ Tidak dapat salin automatik. Sila salin secara manual:", st.session_state["pilihan_pantun"])
+if search_query:
+    df_filtered = df[df.apply(lambda row: search_query.lower() in row.to_string().lower(), axis=1)]
 else:
-    st.warning("⚠ Tiada pantun yang sepadan dengan carian.")
+    df_filtered = df.copy()
 
-# ✅ Pilihan kategori
+if df_filtered.empty:
+    st.warning("⚠️ Tiada pantun yang sepadan dengan kata kunci anda.")
+else:
+    selected_pantun_query = st.selectbox("📜 **Pilih Pantun:**", df_filtered["Pantun"].tolist(), key="pantun_cari")
+    st.markdown(f"### ✍️ Pantun Pilihan:\n\n📜 {selected_pantun_query}")
+
+    if st.button("📋 Salin Pantun", key="salin_carian"):
+        pyperclip.copy(selected_pantun_query)
+        st.success("✅ Pantun berjaya disalin! Tekan **CTRL + V** untuk tampal.")
+
 st.markdown("---")
-st.subheader("📌 Carian Berdasarkan Kategori")
 
-kategori_pilihan = st.selectbox(
-    "📌 **Pilih kategori pencarian:**",
-    ["Semua", "Penulis", "Tema", "Jenis", "Makna", "Situasi Penggunaan",
-     "Situasi Formal", "Situasi Santai", "Situasi Kehidupan",
-     "Acara/Majlis", "Acara Keagamaan", "Acara Sosial", "Acara Pendidikan"],
-    key="kategori_select"
-)
+# ---------------------- Carian Berdasarkan Kategori ----------------------
+st.subheader("🎯 Carian Berdasarkan Kategori")
+kategori_list = ["Pilih kategori"] + [col for col in df.columns if col != "Pantun"]
+kategori = st.selectbox("📌 Pilih kategori pencarian:", kategori_list, key="kategori_select")
 
-st.session_state["kategori"] = kategori_pilihan
+if kategori and kategori != "Pilih kategori":
+    pilihan_list = ["Pilih nilai"] + sorted(df[kategori].dropna().unique().tolist())
+    pilihan = st.selectbox(f"🎯 **Pilih nilai untuk '{kategori}':**", pilihan_list, key="pilihan")
 
-if kategori_pilihan != "Semua":
-    if kategori_pilihan in df.columns:
-        pilihan_options = sorted(df[kategori_pilihan].dropna().unique())
+    if pilihan and pilihan != "Pilih nilai":
+        filtered_df = df[df[kategori] == pilihan]
+        pantun_kategori = st.selectbox("📜 **Pilih Pantun:**", filtered_df["Pantun"].tolist(), key="pantun_kategori")
+        st.markdown(f"### ✍️ Pantun Pilihan:\n\n📜 {pantun_kategori}")
 
-        if pilihan_options:
-            pilihan_kategori = st.selectbox(
-                f"🎯 **Pilih nilai untuk '{kategori_pilihan}':**",
-                pilihan_options,
-                key="pilihan_kategori_select"
-            )
+        if st.button("📋 Salin Pantun", key="salin_kategori"):
+            pyperclip.copy(pantun_kategori)
+            st.success("✅ Pantun berjaya disalin! Tekan **CTRL + V** untuk tampal.")
 
-            filtered_df = df[df[kategori_pilihan] == pilihan_kategori]
-            st.write(f"✅ Menunjukkan hasil untuk: {kategori_pilihan} = {pilihan_kategori}")
-            st.dataframe(filtered_df)
-        else:
-            st.warning("⚠ Tiada pilihan untuk kategori ini.")
-    else:
-        st.error("❌ Kategori tidak wujud dalam data.")
+st.markdown("---")
+
+# ---------------------- Penutup ----------------------
+st.info("🔄 Untuk reset semua pilihan, sila **refresh** halaman ini.")
+st.success("✅ Aplikasi berjaya dimuatkan!")
