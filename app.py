@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import pyperclip
 
 # --- SETUP ---
 st.set_page_config(page_title="Carian Pantun Berguna", layout="centered")
@@ -24,9 +23,7 @@ if search_query:
     df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
     if not df_filtered.empty:
         selected_pantun_query = st.selectbox("📜 Pilih Pantun:", df_filtered["Pantun"].tolist(), key="pantun_cari")
-        if st.button("📋 Salin Pantun", key="salin_query"):
-            pyperclip.copy(selected_pantun_query)
-            st.success("✅ Pantun berjaya disalin! Tekan **CTRL + V** untuk tampal.")
+        st.text_area("📋 Salin Pantun:", selected_pantun_query, height=100)  # Kotak teks boleh salin manual
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk kata kunci tersebut.")
 
@@ -43,9 +40,7 @@ if kategori != "Pilih":
     filtered_df = df[df[kategori] == pilihan]
     if not filtered_df.empty:
         pantun_kategori = st.selectbox("📜 Pilih Pantun:", filtered_df["Pantun"].tolist(), key="pantun_kategori")
-        if st.button("📋 Salin Pantun", key="salin_kategori"):
-            pyperclip.copy(pantun_kategori)
-            st.success("✅ Pantun berjaya disalin! Tekan **CTRL + V** untuk tampal.")
+        st.text_area("📋 Salin Pantun:", pantun_kategori, height=100)  # Kotak teks boleh salin manual
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk pilihan ini.")
 
