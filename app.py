@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import pyperclip
 
 # --- SETUP ---
 st.set_page_config(page_title="Carian Pantun Berguna", layout="centered")
@@ -23,19 +24,27 @@ if search_query:
     df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
     if not df_filtered.empty:
         selected_pantun_query = st.selectbox("📜 Pilih Pantun:", df_filtered["Pantun"].tolist(), key="pantun_cari")
-        
-        # Kotak teks tidak perlu, gantikan dengan butang Salin
-        if st.button("📋 Salin Pantun"):
-            st.markdown(f"""
-                <script>
-                function copyToClipboard(text) {{
-                    navigator.clipboard.writeText(text).then(() => {{
-                        alert("✅ Pantun berjaya disalin!");
-                    }});
-                }}
-                copyToClipboard("{selected_pantun_query}");
-                </script>
-                """, unsafe_allow_html=True)
+
+        # Tunjukkan pantun yang dipilih
+        st.markdown("### 📋 Salin Pantun:")
+        st.text_area("", selected_pantun_query, height=120)
+
+        # Butang Salin dengan 2 kaedah: pyperclip (lokal) & JS (Streamlit Cloud)
+        if st.button("📋 Salin Pantun", key="salin_pantun"):
+            try:
+                pyperclip.copy(selected_pantun_query)
+                st.success("✅ Pantun berjaya disalin! Tekan CTRL + V untuk menampal.")
+            except pyperclip.PyperclipException:
+                st.markdown(f"""
+                    <script>
+                    function copyToClipboard(text) {{
+                        navigator.clipboard.writeText(text).then(() => {{
+                            alert("✅ Pantun berjaya disalin!");
+                        }});
+                    }}
+                    copyToClipboard("{selected_pantun_query}");
+                    </script>
+                    """, unsafe_allow_html=True)
 
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk kata kunci tersebut.")
@@ -54,25 +63,33 @@ if kategori != "Pilih":
     if not filtered_df.empty:
         pantun_kategori = st.selectbox("📜 Pilih Pantun:", filtered_df["Pantun"].tolist(), key="pantun_kategori")
 
-        # Butang Salin untuk kategori
-        if st.button("📋 Salin Pantun Kategori"):
-            st.markdown(f"""
-                <script>
-                function copyToClipboard(text) {{
-                    navigator.clipboard.writeText(text).then(() => {{
-                        alert("✅ Pantun berjaya disalin!");
-                    }});
-                }}
-                copyToClipboard("{pantun_kategori}");
-                </script>
-                """, unsafe_allow_html=True)
+        # Tunjukkan pantun pilihan
+        st.markdown("### 📋 Salin Pantun Kategori:")
+        st.text_area("", pantun_kategori, height=120)
+
+        # Butang Salin
+        if st.button("📋 Salin Pantun Kategori", key="salin_pantun_kategori"):
+            try:
+                pyperclip.copy(pantun_kategori)
+                st.success("✅ Pantun berjaya disalin! Tekan CTRL + V untuk menampal.")
+            except pyperclip.PyperclipException:
+                st.markdown(f"""
+                    <script>
+                    function copyToClipboard(text) {{
+                        navigator.clipboard.writeText(text).then(() => {{
+                            alert("✅ Pantun berjaya disalin!");
+                        }});
+                    }}
+                    copyToClipboard("{pantun_kategori}");
+                    </script>
+                    """, unsafe_allow_html=True)
 
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk pilihan ini.")
 
 st.markdown("---")
 
-# --- FOOTER ---
+# --- FOOTER (BETULKAN KESILAPAN) ---
 st.markdown(
     """
     <div style="text-align: center; font-size: 12px; color: gray;">
