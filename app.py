@@ -1,93 +1,93 @@
 import streamlit as st
 import pandas as pd
-import os
+import pyperclip
 
-# ========== 📌 WAJIB: Set Page Config ==========
+# ========== 💾 MEMBACA DATA ==========
+file_path = "Data_Pantun_Dikemas_Kini.csv"
+df = pd.read_csv(file_path, encoding="utf-8")
+
+# ========== 📌 SET DEFAULT SESSION_STATE ==========
+if "search_query" not in st.session_state:
+    st.session_state["search_query"] = ""
+
+if "kategori" not in st.session_state:
+    st.session_state["kategori"] = "Semua"
+
+if "pilihan_kategori" not in st.session_state:
+    st.session_state["pilihan_kategori"] = None
+
+if "pantun_cari" not in st.session_state:
+    st.session_state["pantun_cari"] = None
+
+if "pantun_kategori" not in st.session_state:
+    st.session_state["pantun_kategori"] = None
+
+# ========== 🎨 GAYA PAPARAN STREAMLIT ==========
 st.set_page_config(
     page_title="Carian Pantun",
     page_icon="📖",
     layout="wide"
 )
 
-# ========== 🔍 DEBUGGING ==========
-st.write("✅ Aplikasi berjaya dimuatkan!")  
-st.write("📂 Lokasi kerja semasa:", os.getcwd())  
-
-# ========== 💾 MEMBACA DATA ==========
-file_path = "Data_Pantun_Dikemas_Kini.csv"
-
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8")
-    st.write("✅ CSV berjaya dimuatkan!")  
-    st.dataframe(df.head())  
-else:
-    st.error("❌ Gagal menemui fail CSV! Pastikan nama fail betul dalam repo GitHub.")
-    st.stop()
-
 # ========== 🏆 TAJUK UTAMA ==========
 st.markdown("<h1 style='text-align: center; color: darkblue;'>🔍 Carian Pantun Interaktif</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: grey;'>Cari pantun berdasarkan kategori atau kata kunci</h4>", unsafe_allow_html=True)
 
-# ========== 🔎 CARI PANTUN BERDASARKAN KATA KUNCI ==========
-st.write("📌 Debug: Memaparkan kotak carian...")
-search_query = st.text_input("Masukkan kata kunci pantun:", key="search_query")
+# ========== 🖥️ PAPAR DATA PENUH ==========
+st.markdown("### 📌 Data Penuh:")
+st.dataframe(df, height=400, use_container_width=True)
 
-if search_query:
-    df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
-    st.write(f"### Hasil carian untuk: '{search_query}'")
-    st.dataframe(df_filtered, height=400, use_container_width=True)
+# ========== 🔎 CARI PANTUN BERDASARKAN KATA KUNCI ==========
+st.markdown("---")
+search_input = st.text_input("🔍 **Cari pantun berdasarkan kata kunci:**", st.session_state["search_query"], key="search_bar")
+
+if search_input:
+    df_filtered = df[df["Pantun"].str.contains(search_input, case=False, na=False)]
+    st.write(f"### Hasil carian untuk: '{search_input}'")
 
     if not df_filtered.empty:
-        selected_pantun_query = df_filtered.iloc[0]["Pantun"]  
-        st.markdown("### ✨ Pantun dari Hasil Carian:")
-        st.text_area("📖 Pantun:", selected_pantun_query, height=100, key="selected_pantun_query")
+        pantun_cari = st.selectbox("📜 **Pilih Pantun:**", df_filtered["Pantun"].tolist(), key="pantun_cari_select")
+        st.markdown(f"### ✍️ Pantun Pilihan:\n\n📜 {pantun_cari}")
+
+        if st.button("📋 Salin Pantun", key="salin_kata_kunci"):
+            pyperclip.copy(pantun_cari)
+            st.success("✅ Pantun berjaya disalin! Tekan CTRL + V untuk tampal.")
+
+st.markdown("---")
 
 # ========== 🎛️ PILIHAN DROPDOWN ==========
-st.write("📌 Debug: Memaparkan dropdown kategori...")
-kategori_list = [
-    "Kosong tanpa kategori",
-    "Semua",
-    "Penulis", "Tema", "Jenis", "Makna", "Situasi Penggunaan", 
-    "Situasi Formal", "Situasi Santai", "Situasi Kehidupan",
-    "Acara/Majlis", "Acara Keagamaan", "Acara Sosial", "Acara Pendidikan"
-]
+st.markdown("### 🎯 Carian Berdasarkan Kategori")
 
-kategori = st.selectbox(
-    "📌 **Pilih kategori pencarian:**",
-    kategori_list,
-    key="kategori"
-)
+col1, col2 = st.columns(2)
 
-if kategori == "Kosong tanpa kategori":
-    st.info("🔹 Sila pilih kategori untuk melihat hasil.")
-
-elif kategori == "Semua":
-    st.markdown("### ✅ Menunjukkan semua pantun dalam data:")
-    st.dataframe(df, height=400, use_container_width=True)
-
-else:
-    st.write(f"📌 Debug: Memproses kategori {kategori}...")
-    pilihan_list = sorted(df[kategori].dropna().unique()) if kategori in df.columns else ["Tidak Ada Data"]
-    pilihan = st.selectbox(
-        f"🎯 **Pilih nilai untuk '{kategori}':**",
-        pilihan_list,
-        key="pilihan"
+with col1:
+    kategori_pilihan = st.selectbox(
+        "📌 **Pilih kategori pencarian:**",
+        ["Semua", "Penulis", "Tema", "Jenis", "Makna", "Situasi Penggunaan",
+         "Situasi Formal", "Situasi Santai", "Situasi Kehidupan",
+         "Acara/Majlis", "Acara Keagamaan", "Acara Sosial", "Acara Pendidikan"],
+        index=0 if st.session_state["kategori"] == "Semua" else None,
+        key="kategori_select"
     )
 
-    filtered_df = df[df[kategori] == pilihan]
-    st.markdown(f"<h3 style='color: darkgreen;'>✅ Menunjukkan hasil untuk: {kategori} = {pilihan}</h3>", unsafe_allow_html=True)
-    st.dataframe(filtered_df, height=400, use_container_width=True)
+if kategori_pilihan != "Semua":
+    with col2:
+        pilihan_options = sorted(df[kategori_pilihan].dropna().unique())
+        pilihan_kategori = st.selectbox(
+            f"🎯 **Pilih nilai untuk '{kategori_pilihan}':**",
+            pilihan_options,
+            key="pilihan_kategori_select"
+        )
 
-# ========== 🔄 BUTANG RESET ==========
+    filtered_df = df[df[kategori_pilihan] == pilihan_kategori]
+    st.markdown(f"<h3 style='color: darkgreen;'>✅ Menunjukkan hasil untuk: {kategori_pilihan} = {pilihan_kategori}</h3>", unsafe_allow_html=True)
+
+    if not filtered_df.empty:
+        pantun_kategori = st.selectbox("📜 **Pilih Pantun:**", filtered_df["Pantun"].tolist(), key="pantun_kategori_select")
+        st.markdown(f"### ✍️ Pantun Pilihan:\n\n📜 {pantun_kategori}")
+
+        if st.button("📋 Salin Pantun", key="salin_kategori"):
+            pyperclip.copy(pantun_kategori)
+            st.success("✅ Pantun berjaya disalin! Tekan CTRL + V untuk tampal.")
+
 st.markdown("---")
-if st.button("🔄 Reset Pilihan"):
-    st.write("📌 Debug: Reset ditekan!")
-    keys_to_reset = ["search_query", "kategori", "pilihan", "selected_pantun_query"]
-    for key in keys_to_reset:
-        if key in st.session_state:
-            del st.session_state[key]
-    st.session_state["kategori"] = "Kosong tanpa kategori"  
-    st.rerun()
-
-# ========== 🔚 PENGESAHAN AKHIR ==========
-st.write("✅ Debug: Kod berjaya sampai ke penghujung!")  
