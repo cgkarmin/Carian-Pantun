@@ -29,19 +29,19 @@ if search_query:
         st.text_area("", selected_pantun_query, height=120)
 
         # Butang Salin menggunakan JavaScript (berfungsi di Streamlit Cloud)
-        if st.button("📋 Salin Pantun", key="salin_pantun"):
-            st.markdown(f"""
-                <script>
-                function copyToClipboard(text) {{
-                    navigator.clipboard.writeText(text).then(() => {{
-                        alert("✅ Pantun berjaya disalin!");
-                    }}).catch(err => {{
-                        console.error('Gagal menyalin:', err);
-                    }});
-                }}
-                copyToClipboard("{selected_pantun_query}");
-                </script>
-                """, unsafe_allow_html=True)
+        salin_script = f"""
+            <script>
+            function copyToClipboard(text) {{
+                navigator.clipboard.writeText(text).then(() => {{
+                    alert("✅ Pantun berjaya disalin!");
+                }}).catch(err => {{
+                    console.error('Gagal menyalin:', err);
+                }});
+            }}
+            </script>
+            <button onclick="copyToClipboard('{selected_pantun_query.replace("'", "\\'")}')">📋 Salin Pantun</button>
+        """
+        st.markdown(salin_script, unsafe_allow_html=True)
 
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk kata kunci tersebut.")
@@ -65,19 +65,19 @@ if kategori != "Pilih":
         st.text_area("", pantun_kategori, height=120)
 
         # Butang Salin menggunakan JavaScript (berfungsi di Streamlit Cloud)
-        if st.button("📋 Salin Pantun Kategori", key="salin_pantun_kategori"):
-            st.markdown(f"""
-                <script>
-                function copyToClipboard(text) {{
-                    navigator.clipboard.writeText(text).then(() => {{
-                        alert("✅ Pantun berjaya disalin!");
-                    }}).catch(err => {{
-                        console.error('Gagal menyalin:', err);
-                    }});
-                }}
-                copyToClipboard("{pantun_kategori}");
-                </script>
-                """, unsafe_allow_html=True)
+        salin_script_kategori = f"""
+            <script>
+            function copyToClipboard(text) {{
+                navigator.clipboard.writeText(text).then(() => {{
+                    alert("✅ Pantun berjaya disalin!");
+                }}).catch(err => {{
+                    console.error('Gagal menyalin:', err);
+                }});
+            }}
+            </script>
+            <button onclick="copyToClipboard('{pantun_kategori.replace("'", "\\'")}')">📋 Salin Pantun Kategori</button>
+        """
+        st.markdown(salin_script_kategori, unsafe_allow_html=True)
 
     else:
         st.warning("⚠️ Tiada pantun dijumpai untuk pilihan ini.")
