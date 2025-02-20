@@ -2,33 +2,34 @@ import streamlit as st
 import pandas as pd
 import os
 
-# ========== 🔍 DEBUGGING ==========
-st.write("✅ Aplikasi berjaya dimuatkan!")  # Debug: Pastikan aplikasi tidak kosong
-st.write("📂 Lokasi kerja semasa:", os.getcwd())  # Debug: Lokasi fail CSV
-
-# ========== 💾 MEMBACA DATA ==========
-file_path = "Data_Pantun_Dikemas_Kini.csv"
-
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8")
-    st.write("✅ CSV berjaya dimuatkan!")  # Debug: Pastikan CSV dibaca
-    st.dataframe(df.head())  # Debug: Paparkan 5 baris pertama untuk semakan
-else:
-    st.error("❌ Gagal menemui fail CSV! Pastikan nama fail betul dalam repo GitHub.")
-    st.stop()  # Hentikan aplikasi jika fail CSV tidak ada
-
-# ========== 🎨 GAYA PAPARAN STREAMLIT ==========
+# ========== 📌 WAJIB: Set Page Config ==========
 st.set_page_config(
     page_title="Carian Pantun",
     page_icon="📖",
     layout="wide"
 )
 
+# ========== 🔍 DEBUGGING ==========
+st.write("✅ Aplikasi berjaya dimuatkan!")  
+st.write("📂 Lokasi kerja semasa:", os.getcwd())  
+
+# ========== 💾 MEMBACA DATA ==========
+file_path = "Data_Pantun_Dikemas_Kini.csv"
+
+if os.path.exists(file_path):
+    df = pd.read_csv(file_path, encoding="utf-8")
+    st.write("✅ CSV berjaya dimuatkan!")  
+    st.dataframe(df.head())  
+else:
+    st.error("❌ Gagal menemui fail CSV! Pastikan nama fail betul dalam repo GitHub.")
+    st.stop()
+
+# ========== 🏆 TAJUK UTAMA ==========
 st.markdown("<h1 style='text-align: center; color: darkblue;'>🔍 Carian Pantun Interaktif</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: grey;'>Cari pantun berdasarkan kategori atau kata kunci</h4>", unsafe_allow_html=True)
 
 # ========== 🔎 CARI PANTUN BERDASARKAN KATA KUNCI ==========
-st.markdown("### 🔍 Carian Berdasarkan Kata Kunci")
+st.write("📌 Debug: Memaparkan kotak carian...")
 search_query = st.text_input("Masukkan kata kunci pantun:", key="search_query")
 
 if search_query:
@@ -42,8 +43,7 @@ if search_query:
         st.text_area("📖 Pantun:", selected_pantun_query, height=100, key="selected_pantun_query")
 
 # ========== 🎛️ PILIHAN DROPDOWN ==========
-st.markdown("### 🎯 Carian Berdasarkan Kategori")
-
+st.write("📌 Debug: Memaparkan dropdown kategori...")
 kategori_list = [
     "Kosong tanpa kategori",
     "Semua",
@@ -66,6 +66,7 @@ elif kategori == "Semua":
     st.dataframe(df, height=400, use_container_width=True)
 
 else:
+    st.write(f"📌 Debug: Memproses kategori {kategori}...")
     pilihan_list = sorted(df[kategori].dropna().unique()) if kategori in df.columns else ["Tidak Ada Data"]
     pilihan = st.selectbox(
         f"🎯 **Pilih nilai untuk '{kategori}':**",
@@ -80,9 +81,13 @@ else:
 # ========== 🔄 BUTANG RESET ==========
 st.markdown("---")
 if st.button("🔄 Reset Pilihan"):
+    st.write("📌 Debug: Reset ditekan!")
     keys_to_reset = ["search_query", "kategori", "pilihan", "selected_pantun_query"]
     for key in keys_to_reset:
         if key in st.session_state:
             del st.session_state[key]
     st.session_state["kategori"] = "Kosong tanpa kategori"  
     st.rerun()
+
+# ========== 🔚 PENGESAHAN AKHIR ==========
+st.write("✅ Debug: Kod berjaya sampai ke penghujung!")  
