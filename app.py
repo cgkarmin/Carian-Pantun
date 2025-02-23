@@ -1,20 +1,28 @@
 import streamlit as st
 import pandas as pd
+import requests
+from io import StringIO
 
 # ✅ Konfigurasi halaman
 st.set_page_config(page_title="Carian Pantun Berguna", layout="centered")
 
-# ✅ URL CSV dari GitHub (PASTIKAN GUNA PAUTAN RAW)
+# ✅ URL Raw GitHub CSV (PASTIKAN GUNA LINK RAW YANG BETUL)
 csv_url = "https://raw.githubusercontent.com/cgkarmin/Carian-Pantun/main/Data_Pantun_Dikemas_Kini.csv"
 
-# ✅ Fungsi untuk memuatkan data pantun dari GitHub
+# ✅ Fungsi untuk memuat turun & membaca CSV
 @st.cache_data
 def load_data(url):
     try:
-        df = pd.read_csv(url, encoding='utf-8')
-        return df
+        response = requests.get(url)  # Muat turun CSV dari GitHub
+        if response.status_code == 200:
+            data = StringIO(response.text)  # Simpan data dalam format teks
+            df = pd.read_csv(data)  # Baca CSV ke dalam DataFrame
+            return df
+        else:
+            st.error(f"❌ Gagal memuat turun CSV. Kod status: {response.status_code}")
+            return pd.DataFrame()
     except Exception as e:
-        st.error(f"❌ Ralat membaca fail CSV dari GitHub: {e}")
+        st.error(f"❌ Ralat membaca fail CSV: {e}")
         return pd.DataFrame()
 
 # ✅ Muatkan DataFrame pantun
@@ -66,7 +74,7 @@ if not df.empty:
     st.markdown("---")
 
 else:
-    st.warning("⚠ Tiada pantun tersedia untuk dipaparkan. Pastikan fail CSV di GitHub wujud dan boleh diakses.")
+    st.warning("⚠ Tiada pantun tersedia untuk dipaparkan. Pastikan fail CSV di GitHub boleh diakses.")
 
 # ✅ Footer
 st.markdown(
