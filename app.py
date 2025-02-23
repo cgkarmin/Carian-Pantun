@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from io import StringIO
+import datetime
 
 # ✅ Konfigurasi halaman
 st.set_page_config(page_title="Carian Pantun Berguna", layout="centered")
@@ -30,13 +31,13 @@ df = load_data(csv_url)
 
 # ✅ Tajuk utama
 st.markdown("<h1 style='text-align: center;'>📜 Carian Pantun Berguna</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Sebuah carian pantun berguna yang boleh digunakan dalam acara dan majlis.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Sebuah carian pantun berguna untuk membantu pengguna menggunakan pantun.</p>", unsafe_allow_html=True)
 
 # ✅ Jika CSV berjaya dimuatkan, papar carian
 if not df.empty:
     # --- CARI PANTUN BERDASARKAN KATA KUNCI ---
     st.markdown("### 🔎 Cari Pantun Berdasarkan Kata Kunci:")
-    search_query = st.text_input("Masukkan kata kunci:", "")
+    search_query = st.text_input("Masukkan kata kunci dan tekan Enter:", "")
 
     if search_query:
         df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
@@ -76,12 +77,15 @@ if not df.empty:
 else:
     st.warning("⚠ Tiada pantun tersedia untuk dipaparkan. Pastikan fail CSV di GitHub boleh diakses.")
 
-# ✅ Footer
+# ✅ Footer dengan penyataan hak cipta & kredit
+current_year = datetime.datetime.now().year  # Dapatkan tahun semasa
+
 st.markdown(
-    """
+    f"""
+    <hr>
     <div style="text-align: center; font-size: 12px; color: gray;">
-    © 2008-2025 Carian Pantun Berguna. v2. 2008-2025. 
-    Sebuah carian pantun berguna yang boleh digunakan dalam acara dan majlis.
+    © 2023-{current_year} <b>Carian Pantun</b> | Versi 1.0 (2024-2025)<br>
+    <i>Sebuah carian pantun berguna untuk membantu pengguna menggunakan pantun.</i>
     </div>
     """,
     unsafe_allow_html=True
