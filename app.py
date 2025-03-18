@@ -1,92 +1,42 @@
 import streamlit as st
 import pandas as pd
-import requests
-from io import StringIO
-import datetime
 
-# ✅ Konfigurasi halaman
-st.set_page_config(page_title="Carian Pantun Berguna", layout="centered")
+# Tajuk aplikasi
+st.title("RAJA PRIA - Analisis Pantun")
 
-# ✅ URL Raw GitHub CSV (PASTIKAN GUNA LINK RAW YANG BETUL)
-csv_url = "https://raw.githubusercontent.com/cgkarmin/Carian-Pantun/main/Data_Pantun_Dikemas_Kini.csv"
+# Input pantun
+pantun = st.text_area("Masukkan pantun anda di sini:")
 
-# ✅ Fungsi untuk memuat turun & membaca CSV
+# Fungsi untuk membaca database CSV
 @st.cache_data
-def load_data(url):
+def load_database():
     try:
-        response = requests.get(url)  # Muat turun CSV dari GitHub
-        if response.status_code == 200:
-            data = StringIO(response.text)  # Simpan data dalam format teks
-            df = pd.read_csv(data)  # Baca CSV ke dalam DataFrame
-            return df
-        else:
-            st.error(f"❌ Gagal memuat turun CSV. Kod status: {response.status_code}")
-            return pd.DataFrame()
+        df = pd.read_csv("db.csv")
+        return dict(zip(df["Perkataan"].str.lower(), df["Pecahan Suku Kata"]))
     except Exception as e:
-        st.error(f"❌ Ralat membaca fail CSV: {e}")
-        return pd.DataFrame()
+        st.error(f"Ralat membaca fail database: {e}")
+        return {}
 
-# ✅ Muatkan DataFrame pantun
-df = load_data(csv_url)
+suku_kata_database = load_database()
 
-# ✅ Tajuk utama
-st.markdown("<h1 style='text-align: center;'>📜 Carian Pantun Berguna</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Sebuah carian pantun berguna untuk membantu pengguna menggunakan pantun.</p>", unsafe_allow_html=True)
+# Fungsi pecah suku kata
+def pecah_suku_kata(teks):
+    baris = teks.split("\n")
+    hasil = []
+    for index, baris_text in enumerate(baris):
+        baris_text = baris_text.strip().rstrip(".,;")  # Buang tanda baca di akhir baris
+        if baris_text:
+            perkataan = baris_text.split()
+            pecahan_baris = [suku_kata_database.get(kata.lower(), kata) for kata in perkataan]
+            hasil.append(f"Baris {index + 1}: {' '.join(pecahan_baris)}")
+    return hasil
 
-# ✅ Jika CSV berjaya dimuatkan, papar carian
-if not df.empty:
-    # --- CARI PANTUN BERDASARKAN KATA KUNCI ---
-    st.markdown("### 🔎 Cari Pantun Berdasarkan Kata Kunci:")
-    search_query = st.text_input("Masukkan kata kunci dan tekan Enter:", "")
-
-    if search_query:
-        df_filtered = df[df["Pantun"].str.contains(search_query, case=False, na=False)]
-        if not df_filtered.empty:
-            selected_pantun_query = st.selectbox("📜 Pilih Pantun:", df_filtered["Pantun"].tolist(), key="pantun_cari")
-
-            # ✅ Paparkan pantun dalam format 4 baris
-            st.markdown("### 📋 Salin Pantun:")
-            st.text_area("", "\n".join(selected_pantun_query.splitlines()), height=120)
-
-        else:
-            st.warning("⚠️ Tiada pantun dijumpai untuk kata kunci tersebut.")
-
-    st.markdown("---")
-
-    # --- CARI PANTUN BERDASARKAN KATEGORI ---
-    st.markdown("### 📂 Cari Pantun Berdasarkan Kategori:")
-    kategori = st.selectbox("📌 Pilih Kategori:", ["Pilih"] + df.columns[1:].tolist(), key="kategori_select")
-
-    if kategori != "Pilih":
-        pilihan_list = df[kategori].dropna().unique().tolist()
-        pilihan = st.selectbox(f"🎯 **Pilih nilai untuk '{kategori}':**", pilihan_list, key="pilihan")
-        
-        filtered_df = df[df[kategori] == pilihan]
-        if not filtered_df.empty:
-            pantun_kategori = st.selectbox("📜 Pilih Pantun:", filtered_df["Pantun"].tolist(), key="pantun_kategori")
-
-            # ✅ Paparkan pantun dalam format 4 baris
-            st.markdown("### 📋 Salin Pantun Kategori:")
-            st.text_area("", "\n".join(pantun_kategori.splitlines()), height=120)
-
-        else:
-            st.warning("⚠️ Tiada pantun dijumpai untuk pilihan ini.")
-
-    st.markdown("---")
-
-else:
-    st.warning("⚠ Tiada pantun tersedia untuk dipaparkan. Pastikan fail CSV di GitHub boleh diakses.")
-
-# ✅ Footer dengan penyataan hak cipta & kredit
-current_year = datetime.datetime.now().year  # Dapatkan tahun semasa
-
-st.markdown(
-    f"""
-    <hr>
-    <div style="text-align: center; font-size: 12px; color: gray;">
-    © 2023-{current_year} <b>Carian Pantun</b> | Versi 1.0 (2024-2025)<br>
-    <i>Sebuah carian pantun berguna untuk membantu pengguna menggunakan pantun.</i>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Butang periksa
+if st.button("Periksa"):
+    if pantun:
+        hasil = pecah_suku_kata(pantun)
+        st.subheader("Laporan Analisis:")
+        for baris in hasil:
+            st.write(baris)
+    else:
+        st.warning("Sila masukkan pantun terlebih dahulu!")
